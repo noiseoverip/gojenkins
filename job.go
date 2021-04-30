@@ -534,6 +534,25 @@ func (j *Job) History(ctx context.Context) ([]*History, error) {
 	return parseBuildHistory(strings.NewReader(s)), nil
 }
 
+func (pr *PipelineRun) ProceedInputWithParams(ctx context.Context, params map[string]string) (bool, error) {
+	actions, _ := pr.GetPendingInputActions(ctx)
+	data := url.Values{}
+	data.Set("inputId", actions[0].ID)
+	// format {"parameter":[{"name":"param1","value":"valueOfParam1"},{"name":"param2","value":"valueOfParam2"}]}
+	data.Set("json", buildInputParamsJson(params))
+
+	href := pr.Base + "/wfapi/inputSubmit"
+
+	resp, err := pr.Job.Jenkins.Requester.Post(ctx, href, bytes.NewBufferString(data.Encode()), nil, nil)
+	if err != nil {
+		return false, err
+	}
+	if resp.StatusCode != 200 {
+		return false, errors.New(strconv.Itoa(resp.StatusCode))
+	}
+	return true, nil
+}
+
 func (pr *PipelineRun) ProceedInput(ctx context.Context) (bool, error) {
 	actions, _ := pr.GetPendingInputActions(ctx)
 	data := url.Values{}
@@ -569,4 +588,13 @@ func (pr *PipelineRun) AbortInput(ctx context.Context) (bool, error) {
 		return false, errors.New(strconv.Itoa(resp.StatusCode))
 	}
 	return true, nil
+}
+
+func buildInputParamsJson(params map[string]string) string {
+	responseBody := ProceedWithParamsBody{}
+	for paramName, paramValue := range params {
+		responseBody.Parameter = append(responseBody.Parameter,
+			PipelineInputReponse{Name: paramName, Value: paramValue})
+	}
+	return makeJson(responseBody)
 }

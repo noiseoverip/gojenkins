@@ -66,6 +66,23 @@ type PipelineInputAction struct {
 	AbortURL   string
 }
 
+type PipielineInputActionDetailed struct {
+	ID string
+	ProceedText string
+	Message string
+	ProceedURL string
+	AbortURL   string
+	RedirectApprovalURL string
+	Inputs []PipelineInput
+}
+
+type PipelineInput struct {
+	Type string
+	Name string
+	Description string
+	Value string
+}
+
 type PipelineArtifact struct {
 	ID   string
 	Name string
@@ -81,6 +98,15 @@ type PipelineNodeLog struct {
 	HasMore    bool
 	Text       string
 	ConsoleURL string
+}
+
+type ProceedWithParamsBody struct {
+	Parameter []PipelineInputReponse `json:"parameter"'`
+}
+
+type PipelineInputReponse struct {
+	Name string `json:"name"'`
+	Value string `json:"parameter"'`
 }
 
 // utility function to fill in the Base fields under PipelineRun
