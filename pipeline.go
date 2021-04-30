@@ -81,6 +81,10 @@ type PipelineInput struct {
 	Name string
 	Description string
 	Value string
+	Definition struct {
+		DefaultVal string
+		Choices []string // this gets returned only for ChoiceParameterDefinition
+	}
 }
 
 type PipelineArtifact struct {
@@ -106,7 +110,7 @@ type ProceedWithParamsBody struct {
 
 type PipelineInputReponse struct {
 	Name string `json:"name"'`
-	Value string `json:"parameter"'`
+	Value string `json:"value"'`
 }
 
 // utility function to fill in the Base fields under PipelineRun
@@ -159,6 +163,17 @@ func (pr *PipelineRun) GetPendingInputActions(ctx context.Context) (PIAs []Pipel
 	}
 
 	return PIAs, nil
+}
+
+func (pr *PipelineRun) GetNextPendingInputAction(ctx context.Context) (action *PipielineInputActionDetailed, err error) {
+	action = &PipielineInputActionDetailed{}
+	href := pr.Base + "/wfapi/nextPendingInputAction"
+	_, err = pr.Job.Jenkins.Requester.GetJSON(ctx, href, action, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return action, nil
 }
 
 func (pr *PipelineRun) GetArtifacts(ctx context.Context) (artifacts []PipelineArtifact, err error) {
